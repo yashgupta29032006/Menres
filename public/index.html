@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentiClone - Join</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <div class="logo">MentiClone</div>
+    </header>
+
+    <div class="container">
+        <div class="card" style="text-align: center;">
+            <h1>Join a Presentation</h1>
+            <p style="margin-bottom: 2rem; color: #aaa;">Enter the code provided by the presenter (Not needed for this
+                demo, just click Join)</p>
+
+            <input type="text" placeholder="Enter code (optional)" disabled>
+            <br><br>
+            <button onclick="window.location.href='/student.html'">Join Room</button>
+        </div>
+
+        <div class="card" style="text-align: center; margin-top: 2rem;">
+            <h2>Are you a presenter?</h2>
+            <button class="secondary" onclick="window.location.href='/presenter.html'">Open Dashboard</button>
+        </div>
+    </div>
+</body>
+
+</html>

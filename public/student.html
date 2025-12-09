@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentiClone - Student</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <div class="logo">MentiClone</div>
+        <div id="connection-status" style="color: var(--success-color);">Connected</div>
+    </header>
+
+    <div class="container" style="max-width: 600px;">
+        <div id="waiting-screen" class="card hidden">
+            <h2>Waiting for presenter...</h2>
+            <p>The session is currently paused.</p>
+        </div>
+
+        <div id="input-area" class="card">
+            <h2 id="question-title">Loading...</h2>
+
+            <!-- Text Input Form -->
+            <div id="text-form" class="hidden">
+                <input type="text" id="text-input" placeholder="Type your answer here..." maxlength="140">
+                <br><br>
+                <button onclick="submitText()">Submit</button>
+            </div>
+
+            <!-- Poll Form -->
+            <div id="poll-form" class="hidden">
+                <p>Choose an option:</p>
+                <div id="poll-options-container" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+    <script>
+        const socket = io();
+        let currentSlideType = '';
+
+        socket.on('connect', () => {
+            document.getElementById('connection-status').innerText = 'Connected';
+            document.getElementById('connection-status').style.color = 'var(--success-color)';
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').innerText = 'Disconnected';
+            document.getElementById('connection-status').style.color = 'var(--error-color)';
+        });
+
+        socket.on('state_update', (state) => {
+            updateUI(state);
+        });
+
+        socket.on('error_message', (msg) => {
+            showToast(msg, 'error');
+        });
+
+        socket.on('success_message', (msg) => {
+            showToast(msg, 'success');
+            document.getElementById('text-input').value = '';
+        });
+
+        function updateUI(state) {
+            const waitingScreen = document.getElementById('waiting-screen');
+            const inputArea = document.getElementById('input-area');
+            const textForm = document.getElementById('text-form');
+            const pollForm = document.getElementById('poll-form');
+            const questionTitle = document.getElementById('question-title');
+
+            if (!state.isActive) {
+                waitingScreen.classList.remove('hidden');
+                inputArea.classList.add('hidden');
+                return;
+            }
+
+            waitingScreen.classList.add('hidden');
+            inputArea.classList.remove('hidden');
+
+            const slide = state.currentSlide;
+            currentSlideType = slide.type;
+            questionTitle.innerText = slide.question;
+
+            // Reset forms
+            textForm.classList.add('hidden');
+            pollForm.classList.add('hidden');
+
+            if (slide.type === 'text' || slide.type === 'wordcloud') {
+                textForm.classList.remove('hidden');
+                document.getElementById('text-input').placeholder = slide.type === 'wordcloud' ? "Enter a word..." : "Type your answer...";
+            } else if (slide.type === 'poll') {
+                pollForm.classList.remove('hidden');
+                const container = document.getElementById('poll-options-container');
+                container.innerHTML = '';
+                Object.keys(slide.options).forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'secondary';
+                    btn.innerText = opt;
+                    btn.onclick = () => submitPoll(opt);
+                    container.appendChild(btn);
+                });
+            }
+        }
+
+        function submitText() {
+            const input = document.getElementById('text-input');
+            const content = input.value.trim();
+            if (!content) return;
+
+            socket.emit('submit_response', { type: currentSlideType, content });
+        }
+
+        function submitPoll(option) {
+            socket.emit('submit_response', { type: 'poll', content: option });
+        }
+
+        function showToast(message, type) {
+            const x = document.getElementById("toast");
+            x.className = "show " + type;
+            x.innerText = message;
+            setTimeout(function () { x.className = x.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+
+</html>
