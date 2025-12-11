@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const profanityFilter = require('./utils/filter');
+const templates = require('./utils/templates');
 
 const app = express();
 const server = http.createServer(app);
@@ -168,6 +169,28 @@ io.on('connection', (socket) => {
         }
 
         io.emit('state_update', getPublicState());
+    });
+
+    socket.on('get_templates', (callback) => {
+        // Return templates without the full slide data if we want to save bandwidth, 
+        // but for now sending everything is fine.
+        callback(templates);
+    });
+
+    socket.on('use_template', (templateId) => {
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            // Deep copy slides to avoid mutating the original template if we modify slides later
+            state.slides = JSON.parse(JSON.stringify(template.slides));
+            state.currentSlideIndex = 0;
+            state.responses = []; // Clear all responses
+            state.isActive = true;
+
+            io.emit('state_update', getPublicState());
+            socket.emit('success_message', `Template '${template.name}' applied successfully!`);
+        } else {
+            socket.emit('error_message', 'Template not found.');
+        }
     });
 
     socket.on('disconnect', () => {

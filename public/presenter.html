@@ -80,6 +80,7 @@
                     <h3>Session Controls</h3>
                     <button id="toggle-active-btn" onclick="toggleActive()" style="margin-bottom: 10px;">Pause
                         Session</button>
+                    <button class="secondary" onclick="openTemplateModal()" style="margin-bottom: 10px;">📄 Browse Templates</button>
                     <button class="danger" onclick="clearResponses()">Clear Results</button>
                 </div>
 
@@ -124,6 +125,20 @@
     </div>
 
     <div id="toast">Notification</div>
+
+    <!-- Templates Modal -->
+    <div id="template-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Presentation Templates</h2>
+                <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
+            </div>
+            <div id="template-list" class="template-list">
+                <!-- Templates injected here -->
+                <p>Loading templates...</p>
+            </div>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -402,6 +417,49 @@
         function removeBlockWord(word) {
             socket.emit('admin_update_blocklist', { action: 'remove', word });
         }
+
+        // --- Template Logic ---
+        function openTemplateModal() {
+            const modal = document.getElementById('template-modal');
+            modal.classList.add('open');
+            
+            // Fetch templates
+            socket.emit('get_templates', (templates) => {
+                renderTemplates(templates);
+            });
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('template-modal').classList.remove('open');
+        }
+
+        function renderTemplates(templates) {
+            const container = document.getElementById('template-list');
+            container.innerHTML = '';
+
+            templates.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                card.onclick = () => confirmTemplate(t);
+                
+                card.innerHTML = `
+                    <h4>${t.name}</h4>
+                    <p>${t.description}</p>
+                    <div class="template-meta">${t.slides.length} slides</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function confirmTemplate(template) {
+            if (confirm(`Replace all current slides with '${template.name}'? This will delete current responses.`)) {
+                socket.emit('use_template', template.id);
+                closeTemplateModal();
+            }
+        }
+        
+        socket.on('success_message', (msg) => showToast(msg, 'success'));
+        socket.on('error_message', (msg) => showToast(msg, 'error'));
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
