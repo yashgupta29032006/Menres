@@ -7,31 +7,42 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Corporate Clean System
-                corp: {
-                    primary: '#1a56db', // Classic Blue Header
-                    secondary: '#1e40af', // Darker Blue
-                    bg: '#f0f2f5',      // Light Gray App Background
-                    border: '#d1d5db',  // Standard Border
-                    text: '#333333',    // Dark Gray Text
-                    muted: '#6b7280',   // Muted Text
+                primary: {
+                    DEFAULT: '#2563EB', // Blue 600
+                    hover: '#1D4ED8',   // Blue 700
+                    light: '#3B82F6',   // Blue 500
                 },
-                // Chart colors (Standard Office Palette)
+                slate: {
+                    50: '#F8FAFC', // App Background
+                    100: '#F1F5F9', // Panel Background
+                    200: '#E2E8F0', // Hover States (No borders)
+                    300: '#CBD5E1', // Icon Colors
+                    800: '#0F172A', // Text Primary (High Contrast)
+                    500: '#64748B', // Text Secondary
+                },
+                // Chart colors
                 chart: {
-                    1: '#1a56db', // Blue
-                    2: '#dc2626', // Red
-                    3: '#f59e0b', // Amber
-                    4: '#10b981', // Emerald
-                    5: '#8b5cf6', // Violet
+                    1: '#2563EB',
+                    2: '#10B981',
+                    3: '#F59E0B',
+                    4: '#EC4899',
+                    5: '#8B5CF6',
                 }
             },
             fontFamily: {
-                // Traditional System Sans
-                sans: ['Arial', 'Helvetica', 'sans-serif'],
+                sans: ['Inter', 'system-ui', 'sans-serif'],
             },
             boxShadow: {
-                'clean': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                'paper': '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -2px rgba(0, 0, 0, 0.02)', // Panel separation
+                'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)', // Subtle card definition
+                'floating': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // Canvas elevation
+                'glow': '0 0 0 2px rgba(37, 99, 235, 0.1)', // Focus rings
+            },
+            borderRadius: {
+                'xl': '12px',
+                'lg': '8px',
+                'full': '9999px',
             }
         },
     },

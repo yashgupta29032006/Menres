@@ -2,18 +2,20 @@ import { useEffect, useState } from 'react';
 import { socket } from '../socket';
 import { InitialState, type AppState, type SlideType } from '../types';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTrash, FaChartBar, FaFont, FaCloud, FaBars, FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, FaAlignRight, FaImage, FaTable, FaLink, FaListUl, FaListOl } from 'react-icons/fa';
+import {
+    FaPlus, FaTrash, FaChartBar, FaFont, FaCloud, FaBold, FaItalic, FaUnderline,
+    FaAlignLeft, FaAlignCenter, FaAlignRight, FaImage, FaPlay, FaMagic
+} from 'react-icons/fa';
 
 /**
- * MENRES CORPORATE - PRESENTER DASHBOARD
- * Layout: Classic Slide Editor (PowerPoint-esque)
- * [ Header (Blue) ]
- * [ Slides | Toolbar + Canvas | Settings ]
+ * MENRES V3: DEEP ELEVATION
+ * Philosophy: Content floats on a Slate-50 sea.
+ * Separation: Padding & Shadows. NO Borders.
  */
 
 const Presenter = () => {
     const [state, setState] = useState<AppState>(InitialState);
-    const [activeTab, setActiveTab] = useState<'settings' | 'options'>('settings');
+    const [activeTab, setActiveTab] = useState<'content' | 'design'>('content');
 
     useEffect(() => {
         socket.on('state_update', (s) => setState(s));
@@ -25,7 +27,7 @@ const Presenter = () => {
     const addSlide = (type: SlideType = 'text') => {
         socket.emit('admin_control', {
             action: 'add_slide',
-            value: { type, question: 'New Slide', options: type === 'poll' ? { 'Option 1': 0, 'Option 2': 0 } : {} }
+            value: { type, question: 'Untitled Slide', options: type === 'poll' ? { 'Option 1': 0, 'Option 2': 0 } : {} }
         });
     };
 
@@ -34,242 +36,269 @@ const Presenter = () => {
     };
 
     const deleteSlide = (index: number) => {
-        if (confirm('Delete slide?')) socket.emit('admin_control', { action: 'delete_slide', value: index });
+        if (confirm('Delete this slide?')) socket.emit('admin_control', { action: 'delete_slide', value: index });
     };
 
     return (
-        <div className="h-screen flex flex-col bg-white text-corp-text font-sans overflow-hidden">
+        <div className="h-screen w-full bg-slate-50 font-sans text-slate-800 selection:bg-blue-100 selection:text-blue-900 overflow-hidden flex flex-col">
 
-            {/* 1. CORPORATE HEADER */}
-            <header className="h-14 bg-corp-primary flex items-center justify-between px-4 text-white shrink-0">
+            {/* 1. FLOATING HEADER */}
+            <header className="h-20 px-8 flex items-center justify-between shrink-0 z-40">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white/10 rounded flex items-center justify-center">
-                            <FaChartBar className="text-white" />
-                        </div>
-                        <span className="font-medium text-lg tracking-wide">Presenter's Dashboard</span>
+                    <div className="w-10 h-10 bg-white shadow-soft rounded-xl flex items-center justify-center text-blue-600 font-black text-lg tracking-tighter">
+                        M
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-slate-800 tracking-tight">Q3 All-Hands</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saved</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center text-sm gap-2 opacity-80">
-                        <span>Design:</span>
-                        <span className="font-semibold px-2 py-1 bg-white/20 rounded border border-white/30">Corporate Clean v2</span>
-                    </div>
-                    <button className="bg-white text-corp-primary px-6 py-1.5 rounded font-bold text-sm hover:bg-gray-100 transition-colors shadow-sm">
-                        Save
+                <div className="flex items-center gap-3 bg-white p-1.5 pr-2 rounded-full shadow-soft">
+                    <button className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all">
+                        <FaMagic size={12} />
+                    </button>
+                    <div className="w-px h-4 bg-slate-200"></div>
+                    <button className="px-4 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-full hover:bg-slate-900 shadow-lg shadow-slate-800/20 transition-all flex items-center gap-2">
+                        <FaPlay size={8} /> Present
                     </button>
                 </div>
             </header>
 
-            {/* MAIN EDITOR AREA */}
-            <div className="flex-1 flex overflow-hidden">
+            {/* 2. MAIN WORKSPACE */}
+            <div className="flex-1 flex overflow-hidden pb-6 px-6 gap-6">
 
-                {/* 2. FILMSTRIP SIDEBAR (Left) */}
-                <div className="w-56 bg-gray-50 border-r border-gray-300 flex flex-col">
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                {/* LEFT: SLIDE STRIP */}
+                <div className="w-60 flex flex-col gap-4">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 py-2 pl-2">
                         {state.slides.map((slide, idx) => (
-                            <div key={idx} className="flex gap-2">
-                                <div className="w-6 text-right text-xs text-gray-400 py-1 font-mono">{idx + 1}</div>
+                            <div key={idx} className="flex gap-4 group">
+                                <span className="w-4 pt-4 text-[10px] font-bold text-slate-300 text-right">{idx + 1}</span>
                                 <div
                                     onClick={() => setSlide(idx)}
-                                    className={`flex-1 aspect-[16/9] bg-white border-2 cursor-pointer relative shadow-sm transition-all ${idx === state.currentSlideIndex ? 'border-corp-primary ring-2 ring-corp-primary/20' : 'border-gray-300 hover:border-gray-400'
+                                    className={`relative w-full aspect-[4/3] rounded-2xl cursor-pointer transition-all duration-300 ${idx === state.currentSlideIndex
+                                        ? 'bg-white shadow-xl scale-105 z-10 ring-0'
+                                        : 'bg-white/40 hover:bg-white hover:shadow-lg hover:scale-105'
                                         }`}
                                 >
-                                    {/* Mini Content Preview */}
-                                    <div className="absolute inset-0 p-2 overflow-hidden flex flex-col items-center justify-center opacity-80 gap-1">
-                                        <div className="w-full h-1 bg-corp-primary mb-1"></div>
-                                        <div className="text-[6px] text-center leading-tight text-gray-500">{slide.question}</div>
-                                        {slide.type === 'poll' && <FaChartBar size={8} className="text-gray-400" />}
+                                    {/* Mini Preview */}
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                                        {slide.type === 'poll' && <FaChartBar size={20} className="text-slate-800" />}
+                                        {slide.type === 'text' && <FaFont size={20} className="text-slate-800" />}
+                                        {slide.type === 'wordcloud' && <FaCloud size={20} className="text-slate-800" />}
                                     </div>
 
-                                    <button onClick={(e) => { e.stopPropagation(); deleteSlide(idx) }} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:scale-110 shadow-sm opacity-0 group-hover:opacity-100">
+                                    {/* Active Indicator */}
+                                    {idx === state.currentSlideIndex && (
+                                        <div className="absolute top-3 right-3 w-2 h-2 bg-blue-500 rounded-full shadow-glow"></div>
+                                    )}
+
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); deleteSlide(idx) }}
+                                        className="absolute -left-2 -top-2 w-6 h-6 bg-white shadow-md rounded-full text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all z-20"
+                                    >
                                         <FaTrash size={8} />
                                     </button>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <div className="p-2 border-t border-gray-300 bg-gray-100">
-                        <button onClick={() => addSlide('text')} className="w-full py-1 bg-white border border-gray-300 shadow-sm rounded text-sm font-medium hover:bg-gray-50 text-gray-700 flex items-center justify-center gap-2">
-                            <FaPlus size={10} /> Add Slide
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => addSlide('text')}
+                        className="w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-xs hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                    >
+                        <FaPlus /> New Slide
+                    </button>
                 </div>
 
-                {/* 3. CENTER CANVAS + TOOLBAR */}
-                <div className="flex-1 flex flex-col bg-gray-100 min-w-0">
+                {/* CENTER: THE CANVAS */}
+                <div className="flex-1 relative flex flex-col items-center justify-center perspective-1000">
 
-                    {/* WYSIWYG TOOLBAR */}
-                    <div className="h-10 bg-white border-b border-gray-300 flex items-center px-2 gap-1 overflow-x-auto">
-                        <ToolbarBtn icon={<FaBars />} />
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <ToolbarBtn icon={<FaBold />} />
-                        <ToolbarBtn icon={<FaItalic />} />
-                        <ToolbarBtn icon={<FaUnderline />} />
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <ToolbarBtn icon={<FaAlignLeft />} />
-                        <ToolbarBtn icon={<FaAlignCenter />} active />
-                        <ToolbarBtn icon={<FaAlignRight />} />
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <ToolbarBtn icon={<FaListUl />} />
-                        <ToolbarBtn icon={<FaListOl />} />
-                        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-                        <ToolbarBtn icon={<FaLink />} />
-                        <ToolbarBtn icon={<FaImage />} />
-                        <ToolbarBtn icon={<FaTable />} />
+                    {/* FLOATING TOOLBAR PILL */}
+                    <div className="absolute top-0 z-50 bg-white/90 backdrop-blur-md px-2 py-2 rounded-full shadow-floating border border-white/20 flex items-center gap-1 transition-transform hover:scale-105">
+                        <ToolbarIcon icon={<FaBold />} />
+                        <ToolbarIcon icon={<FaItalic />} />
+                        <ToolbarIcon icon={<FaUnderline />} />
+                        <div className="w-px h-4 bg-slate-200 mx-2"></div>
+                        <ToolbarIcon icon={<FaAlignLeft />} />
+                        <ToolbarIcon icon={<FaAlignCenter />} active />
+                        <ToolbarIcon icon={<FaAlignRight />} />
+                        <div className="w-px h-4 bg-slate-200 mx-2"></div>
+                        <ToolbarIcon icon={<FaImage />} />
                     </div>
 
-                    {/* SCROLLABLE CANVAS AREA */}
-                    <div className="flex-1 overflow-auto p-8 flex justify-center items-start">
-                        <div className="w-[800px] aspect-[4/3] bg-white shadow-paper border border-gray-300 relative shrink-0">
+                    {/* THE SLIDE CARD */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="w-full max-w-4xl aspect-[16/9] bg-white rounded-[32px] shadow-2xl flex flex-col overflow-hidden relative"
+                    >
+                        <div className="flex-1 p-20 flex flex-col items-center">
+                            <input
+                                value={state.currentSlide.question}
+                                onChange={() => { }}
+                                placeholder="Type your question..."
+                                className="w-full text-center text-5xl font-black text-slate-800 bg-transparent placeholder:text-slate-200 focus:placeholder:text-slate-100 outline-none pb-8"
+                            />
 
-                            {/* BLUE BORDERS (Classic Look) */}
-                            <div className="absolute top-0 bottom-0 left-0 w-8 bg-corp-primary"></div>
-                            <div className="absolute top-0 bottom-0 right-0 w-8 bg-corp-primary"></div>
-
-                            <div className="absolute inset-0 px-16 py-12 flex flex-col">
-                                <h1 className="text-3xl font-bold text-center mb-8 text-black">{state.currentSlide.question}</h1>
-
-                                <div className="flex-1 border border-dashed border-gray-200 rounded flex items-center justify-center bg-gray-50/50">
-                                    <CanvasResults slide={state.currentSlide} pollCounts={state.pollCounts} responses={state.responses} />
-                                </div>
+                            <div className="flex-1 w-full flex items-center justify-center">
+                                <SlideVisualization slide={state.currentSlide} pollCounts={state.pollCounts} />
                             </div>
                         </div>
-                    </div>
+
+                        {/* Footer Info */}
+                        <div className="h-16 px-10 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                <span className="text-xs font-bold text-slate-400">Live Presentation</span>
+                            </div>
+                            <span className="text-xs font-bold text-slate-300 tracking-widest uppercase">menti.clone</span>
+                        </div>
+                    </motion.div>
+
                 </div>
 
-                {/* 4. SETTINGS SIDEBAR (Right) */}
-                <div className="w-72 bg-white border-l border-gray-300 flex flex-col">
-                    {/* TABS */}
-                    <div className="flex border-b border-gray-300 bg-gray-50">
-                        <button
-                            onClick={() => setActiveTab('settings')}
-                            className={`flex-1 py-2 text-sm font-medium border-b-2 ${activeTab === 'settings' ? 'border-corp-primary text-corp-primary bg-white' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Settings
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('options')}
-                            className={`flex-1 py-2 text-sm font-medium border-b-2 ${activeTab === 'options' ? 'border-corp-primary text-corp-primary bg-white' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Options
-                        </button>
+                {/* RIGHT: CONFIG PANEL */}
+                <div className="w-80 bg-white rounded-3xl shadow-soft p-6 flex flex-col gap-6 overflow-hidden">
+
+                    {/* Tabs */}
+                    <div className="flex p-1 bg-slate-100 rounded-xl">
+                        <TabButton label="Content" active={activeTab === 'content'} onClick={() => setActiveTab('content')} />
+                        <TabButton label="Design" active={activeTab === 'design'} onClick={() => setActiveTab('design')} />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                        {activeTab === 'settings' && (
+                    <div className="flex-1 overflow-y-auto space-y-8 pr-2 custom-scrollbar">
+                        {activeTab === 'content' ? (
                             <>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Question Type</label>
-                                    <div className="w-full border border-gray-300 rounded shadow-sm bg-white overflow-hidden">
-                                        <button onClick={() => addSlide('poll')} className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2 ${state.currentSlide.type === 'poll' ? 'bg-blue-50 text-corp-primary font-bold' : ''}`}>
-                                            <FaChartBar size={12} /> Poll
-                                        </button>
-                                        <button onClick={() => addSlide('wordcloud')} className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2 border-t border-gray-100 ${state.currentSlide.type === 'wordcloud' ? 'bg-blue-50 text-corp-primary font-bold' : ''}`}>
-                                            <FaCloud size={12} /> Word Cloud
-                                        </button>
-                                        <button onClick={() => addSlide('text')} className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2 border-t border-gray-100 ${state.currentSlide.type === 'text' ? 'bg-blue-50 text-corp-primary font-bold' : ''}`}>
-                                            <FaFont size={12} /> Text Slide
-                                        </button>
+                                <section>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Slide Type</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <TypeSelect
+                                            icon={<FaChartBar />}
+                                            label="Poll"
+                                            active={state.currentSlide.type === 'poll'}
+                                            onClick={() => addSlide('poll')}
+                                        />
+                                        <TypeSelect
+                                            icon={<FaCloud />}
+                                            label="Cloud"
+                                            active={state.currentSlide.type === 'wordcloud'}
+                                            onClick={() => addSlide('wordcloud')}
+                                        />
+                                        <TypeSelect
+                                            icon={<FaFont />}
+                                            label="Header"
+                                            active={state.currentSlide.type === 'text'}
+                                            onClick={() => addSlide('text')}
+                                        />
                                     </div>
-                                </div>
+                                </section>
 
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Options</label>
-                                    <div className="space-y-2">
+                                <section>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Entries</label>
+                                    <div className="space-y-3">
                                         {Object.keys(state.currentSlide.options).map((opt, i) => (
-                                            <div key={i} className="flex gap-2">
-                                                <input disabled value={opt} className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 text-gray-500" />
-                                                <button className="text-gray-400 hover:text-red-500"><FaTrash size={12} /></button>
+                                            <div key={i} className="group relative">
+                                                <input
+                                                    disabled
+                                                    value={opt}
+                                                    className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white text-sm font-bold text-slate-700 px-4 py-3 rounded-xl outline-none ring-2 ring-transparent focus:ring-blue-500 transition-all"
+                                                />
+                                                <button className="absolute right-3 top-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                                    <FaTrash size={10} />
+                                                </button>
                                             </div>
                                         ))}
-                                        <div className="flex gap-2">
-                                            <input disabled placeholder="Add option" className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 cursor-not-allowed" />
-                                            <button className="text-gray-400" disabled><FaPlus size={12} /></button>
-                                        </div>
+                                        <button className="w-full py-3 rounded-xl border-dashed border-2 border-slate-100 text-xs font-bold text-slate-400 hover:text-blue-500 hover:border-blue-200 transition-all">
+                                            Add Entry
+                                        </button>
                                     </div>
-                                </div>
+                                </section>
                             </>
-                        )}
-
-                        {activeTab === 'options' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" className="rounded border-gray-300 text-corp-primary focus:ring-corp-primary" />
-                                        Show results
-                                    </label>
-                                </div>
-                                <div>
-                                    <label className="flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" className="rounded border-gray-300 text-corp-primary focus:ring-corp-primary" />
-                                        Close voting
-                                    </label>
-                                </div>
-                                <hr className="border-gray-200" />
-                                <button className="w-full py-1.5 border border-gray-300 rounded shadow-sm text-sm font-semibold hover:bg-gray-50 text-gray-700">
-                                    Export Results
-                                </button>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center opacity-50 py-10 gap-3">
+                                <FaMagic size={24} className="text-slate-300" />
+                                <span className="text-xs font-bold text-slate-400">Theme Designer Coming Soon</span>
                             </div>
                         )}
                     </div>
-
-                    <div className="p-4 border-t border-gray-300 bg-gray-50">
-                        <button className="w-full bg-corp-primary text-white py-2 rounded shadow-sm text-sm font-bold hover:bg-corp-secondary" onClick={() => socket.emit('admin_control', { action: 'toggle_active', value: !state.isActive })}>
-                            {state.isActive ? 'Stop Presenting' : 'Start Presenting'}
-                        </button>
-                    </div>
                 </div>
+
             </div>
         </div>
     );
 };
 
-const ToolbarBtn = ({ icon, active }: any) => (
-    <button className={`p-1.5 rounded text-gray-600 hover:bg-gray-100 ${active ? 'bg-gray-200 text-black shadow-inner' : ''}`}>
+// MINI COMPONENTS
+
+const ToolbarIcon = ({ icon, active }: any) => (
+    <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${active ? 'bg-slate-100 text-blue-600 shadow-inner' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
         <span className="text-sm">{icon}</span>
     </button>
 );
 
-const CanvasResults = ({ slide, pollCounts, responses }: any) => {
-    // Standard Office Colors
-    const colors = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'];
+const TabButton = ({ label, active, onClick }: any) => (
+    <button
+        onClick={onClick}
+        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${active ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+    >
+        {label}
+    </button>
+);
 
+const TypeSelect = ({ icon, label, active, onClick }: any) => (
+    <button
+        onClick={onClick}
+        className={`flex flex-col items-center justify-center gap-3 py-6 rounded-2xl transition-all border-2 ${active
+            ? 'bg-blue-50 border-blue-500 text-blue-600 shadow-sm'
+            : 'bg-white border-transparent text-slate-400 hover:bg-slate-50 hover:scale-105'
+            }`}
+    >
+        <span className="text-xl">{icon}</span>
+        <span className="text-xs font-bold">{label}</span>
+    </button>
+);
+
+const SlideVisualization = ({ slide, pollCounts }: any) => {
     if (slide.type === 'poll') {
         const total = Object.values(pollCounts).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
         return (
-            <div className="w-full max-w-lg h-64 flex items-end justify-center gap-8 px-8 pb-4 border-b border-l border-gray-400">
-                {Object.keys(slide.options).map((opt, idx) => {
+            <div className="w-full flex items-end justify-center gap-8 h-64 px-12">
+                {Object.keys(slide.options).map((opt, i) => {
                     const count = Number((pollCounts as any)[opt]) || 0;
                     const pct = total > 0 ? (count / total) * 100 : 0;
-                    const barColor = colors[idx % colors.length];
-
+                    // Modern "Linear" gradients
+                    const grads = ['from-blue-500 to-indigo-500', 'from-emerald-400 to-teal-500', 'from-orange-400 to-red-500'];
                     return (
-                        <div key={opt} className="flex flex-col items-center gap-2 w-16 h-full justify-end">
-                            <span className="text-xs font-bold text-gray-600">{count}</span>
-                            <motion.div
-                                initial={{ height: 0 }}
-                                animate={{ height: `${pct}%` }}
-                                className={`w-full ${barColor} hover:opacity-90 transition-opacity`}
-                            />
-                            <span className="text-xs font-semibold text-gray-800 text-center truncate w-full">{opt}</span>
+                        <div key={i} className="flex flex-col items-center gap-4 w-24 group cursor-default">
+                            <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                                {count} votes
+                            </div>
+                            <div className="w-full h-full flex items-end bg-slate-100 rounded-t-2xl overflow-hidden relative">
+                                <motion.div
+                                    initial={{ height: 0 }}
+                                    animate={{ height: `${pct}%` }}
+                                    transition={{ type: "spring", stiffness: 100 }}
+                                    className={`w-full bg-gradient-to-t ${grads[i % 3]} opacity-90`}
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-slate-500 text-center leading-tight">{opt}</span>
                         </div>
                     )
                 })}
             </div>
-        )
+        );
     }
 
-    // Word Cloud & Text fallback
     return (
-        <div className="text-center">
-            {responses.length === 0 ? <span className="text-gray-400 italic">Waiting for input...</span> :
-                <div className="flex flex-wrap gap-2 justify-center">
-                    {responses.map((r: any, i: number) => <span key={i} className="px-2 py-1 bg-gray-200 rounded text-sm">{r.content}</span>)}
-                </div>}
+        <div className="text-slate-300 flex flex-col items-center gap-4">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center">
+                {slide.type === 'wordcloud' ? <FaCloud size={32} /> : <FaFont size={32} />}
+            </div>
+            <span className="font-bold text-sm tracking-wide uppercase opacity-70">Visualization Placeholder</span>
         </div>
-    )
-}
+    );
+};
 
 export default Presenter;
