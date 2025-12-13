@@ -2,39 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* No Google Fonts - System Sans Only */
+
 :root {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  /* Corporate Clean Standard */
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light;
-  color: #191919;
-  background-color: #F4F5F7;
+  color: #333333;
+  background-color: #f0f2f5;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #F4F5F7;
-  /* Flat consistent SaaS background */
+  background-color: #f0f2f5;
 }
 
-/* Custom Scrollbar for sleek look */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+/* Sharp inputs for that "Classic" feel */
+input:focus,
+button:focus {
+  outline: none;
 }

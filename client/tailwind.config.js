@@ -7,18 +7,31 @@ export default {
     theme: {
         extend: {
             colors: {
-                'menti-blue': '#005CFF', // The specific brand color
-                'menti-blue-dark': '#0046c2',
-                'menti-bg': '#F4F5F7',   // Light Gray SaaS background
-                'menti-dark-text': '#191919',
-                'menti-light-text': '#505050',
+                // Corporate Clean System
+                corp: {
+                    primary: '#1a56db', // Classic Blue Header
+                    secondary: '#1e40af', // Darker Blue
+                    bg: '#f0f2f5',      // Light Gray App Background
+                    border: '#d1d5db',  // Standard Border
+                    text: '#333333',    // Dark Gray Text
+                    muted: '#6b7280',   // Muted Text
+                },
+                // Chart colors (Standard Office Palette)
+                chart: {
+                    1: '#1a56db', // Blue
+                    2: '#dc2626', // Red
+                    3: '#f59e0b', // Amber
+                    4: '#10b981', // Emerald
+                    5: '#8b5cf6', // Violet
+                }
             },
             fontFamily: {
-                sans: ['Inter', 'sans-serif'], // Close to Menti Sans
+                // Traditional System Sans
+                sans: ['Arial', 'Helvetica', 'sans-serif'],
             },
             boxShadow: {
-                'menti-card': '0 2px 8px rgba(0, 0, 0, 0.08)',
-                'menti-hover': '0 4px 12px rgba(0, 92, 255, 0.15)',
+                'clean': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                'paper': '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
             }
         },
     },
