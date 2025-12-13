@@ -2,196 +2,113 @@ import { useEffect, useState } from 'react';
 import { socket } from '../socket';
 import { InitialState, type AppState } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaPaperPlane } from 'react-icons/fa';
 
 const Student = () => {
     const [state, setState] = useState<AppState>(InitialState);
     const [connected, setConnected] = useState(socket.connected);
     const [inputVal, setInputVal] = useState('');
     const [submitted, setSubmitted] = useState(false);
-    const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
     useEffect(() => {
-        function onConnect() {
-            setConnected(true);
-        }
-        function onDisconnect() {
-            setConnected(false);
-        }
-        function onStateUpdate(newState: AppState) {
-            // Whenever slide changes, reset submitted state unless we track it by slide ID
-            // For simplicity, we just reset on slide index change
+        socket.on('state_update', (s) => {
             setState(prev => {
-                if (prev.currentSlide.id !== newState.currentSlide.id) {
+                // Reset local state on new question
+                if (prev.currentSlide.id !== s.currentSlide.id) {
                     setSubmitted(false);
                     setInputVal('');
-                    setMessage(null);
                 }
-                return newState;
+                return s;
             });
-        }
-
-        function onSuccess(msg: string) {
-            setMessage({ type: 'success', text: msg });
-            setSubmitted(true);
-        }
-
-        function onError(msg: string) {
-            setMessage({ type: 'error', text: msg });
-            setSubmitted(false);
-        }
-
-        socket.on('connect', onConnect);
-        socket.on('disconnect', onDisconnect);
-        socket.on('state_update', onStateUpdate);
-        socket.on('success_message', onSuccess);
-        socket.on('error_message', onError);
+        });
+        socket.on('connect', () => setConnected(true));
+        socket.on('disconnect', () => setConnected(false));
+        socket.on('success_message', () => setSubmitted(true));
 
         return () => {
-            socket.off('connect', onConnect);
-            socket.off('disconnect', onDisconnect);
-            socket.off('state_update', onStateUpdate);
-            socket.off('success_message', onSuccess);
-            socket.off('error_message', onError);
+            socket.off('state_update');
+            socket.off('connect');
+            socket.off('disconnect');
+            socket.off('success_message');
         };
     }, []);
 
     const handleSubmit = () => {
-        if (!inputVal && state.currentSlide.type !== 'poll') return;
-
-        socket.emit('submit_response', {
-            type: state.currentSlide.type,
-            content: inputVal
-        });
+        if (inputVal) socket.emit('submit_response', { type: state.currentSlide.type, content: inputVal });
     };
 
-    const currentSlide = state.currentSlide;
+    if (!state.isActive) return (
+        <div className="min-h-screen bg-menti-bg flex flex-col items-center justify-center p-4 text-center">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-2xl animate-pulse">⏸</div>
+            <h1 className="text-xl font-bold text-menti-dark-text mb-2">Presentation Paused</h1>
+            <p className="text-gray-500">The presenter will resume shortly.</p>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-dark-bg text-white flex flex-col p-4 relative overflow-hidden">
-            {/* Background blobs */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-accent rounded-full opacity-10 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500 rounded-full opacity-10 blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-
-            <header className="flex justify-between items-center py-4 px-2 mb-8 border-b border-white/10">
-                <div className="font-bold text-xl tracking-tight">MentiClone</div>
-                <div className={`px-3 py-1 rounded-full text-xs font-mono flex items-center gap-2 ${connected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                    <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    {connected ? 'Live' : 'Offline'}
-                </div>
+        <div className="min-h-screen bg-menti-bg flex flex-col items-center p-4 font-sans">
+            <header className="w-full max-w-md flex justify-between items-center py-4 mb-8">
+                <span className="font-bold text-gray-400">MentiClone</span>
+                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
             </header>
 
-            <main className="flex-grow flex flex-col items-center justify-center max-w-xl w-full mx-auto">
-                <AnimatePresence mode="wait">
-                    {!state.isActive ? (
-                        <motion.div
-                            key="paused"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="text-center p-8 bg-card-bg rounded-2xl border border-dashed border-white/20"
-                        >
-                            <div className="text-4xl mb-4">⏸️</div>
-                            <h2 className="text-2xl font-bold mb-2">Session Paused</h2>
-                            <p className="text-gray-400">The presenter has paused the session. Stay tuned!</p>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key={currentSlide.id}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="w-full"
-                        >
-                            <div className="bg-card-bg backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-xl border border-white/10">
-                                <span className="text-accent text-xs font-bold tracking-wider uppercase mb-2 block">
-                                    {currentSlide.type === 'wordcloud' ? 'Word Cloud' : currentSlide.type === 'poll' ? 'Poll' : 'Q&A'}
-                                </span>
-                                <h2 className="text-3xl font-bold mb-8 leading-tight">{currentSlide.question}</h2>
+            <main className="w-full max-w-md">
+                <AnimatePresence mode='wait'>
+                    <motion.div
+                        key={state.currentSlide.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white p-6 md:p-8 rounded-xl shadow-menti-card border border-gray-100"
+                    >
+                        <h2 className="text-2xl font-bold text-menti-dark-text mb-6 leading-tight">{state.currentSlide.question}</h2>
 
-                                {submitted && state.currentSlide.type !== 'poll' ? (
-                                    <div className="text-center py-8">
-                                        <motion.div
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
-                                        >
-                                            ✓
-                                        </motion.div>
-                                        <p className="text-lg font-semibold">Response Sent!</p>
-                                        <p className="text-gray-400 text-sm mt-2">Wait for the next slide...</p>
-                                        <button
-                                            onClick={() => setSubmitted(false)}
-                                            className="mt-6 text-sm text-accent hover:text-white underline"
-                                        >
-                                            Submit another response?
-                                        </button>
+                        {submitted && state.currentSlide.type !== 'poll' ? (
+                            <div className="text-center py-10">
+                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
+                                <p className="font-semibold text-gray-800">Sent!</p>
+                                <p className="text-sm text-gray-500 mt-2">Wait for the presenter to show the next slide.</p>
+                                <button onClick={() => setSubmitted(false)} className="mt-8 text-menti-blue text-sm font-semibold hover:underline">Submit another answer</button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {state.currentSlide.type === 'poll' && (
+                                    <div className="grid gap-3">
+                                        {Object.keys(state.currentSlide.options).map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => {
+                                                    setInputVal(opt);
+                                                    socket.emit('submit_response', { type: state.currentSlide.type, content: opt });
+                                                }}
+                                                className="w-full text-left p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-menti-blue hover:shadow-menti-hover hover:bg-white transition-all font-medium text-gray-700 active:scale-[0.98]"
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {currentSlide.type === 'poll' && (
-                                            <div className="grid gap-3">
-                                                {Object.keys(currentSlide.options).map((opt) => (
-                                                    <button
-                                                        key={opt}
-                                                        onClick={() => {
-                                                            setInputVal(opt);
-                                                            // Auto submit for polls or wait for button? 
-                                                            // Let's set value and user clicks submit for consistency, or auto. 
-                                                            // UX: Select then Submit is safer.
-                                                        }}
-                                                        className={`p-4 rounded-xl text-left transition-all border ${inputVal === opt
-                                                            ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20'
-                                                            : 'bg-white/5 border-white/10 hover:bg-white/10'
-                                                            }`}
-                                                    >
-                                                        {opt}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                )}
 
-                                        {(currentSlide.type === 'text' || currentSlide.type === 'wordcloud') && (
-                                            <input
-                                                type="text"
-                                                value={inputVal}
-                                                onChange={(e) => setInputVal(e.target.value)}
-                                                placeholder="Type your answer here..."
-                                                className="w-full bg-black/20 border border-white/20 rounded-xl p-4 text-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
-                                                autoFocus
-                                            />
-                                        )}
-
+                                {(state.currentSlide.type === 'text' || state.currentSlide.type === 'wordcloud') && (
+                                    <>
+                                        <input
+                                            className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-menti-blue focus:ring-1 focus:ring-menti-blue transition-all"
+                                            placeholder="Enter your answer..."
+                                            value={inputVal}
+                                            onChange={(e) => setInputVal(e.target.value)}
+                                            autoFocus
+                                        />
                                         <button
                                             onClick={handleSubmit}
-                                            disabled={!inputVal || (state.currentSlide.type === 'poll' && submitted)}
-                                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 mt-6 transition-all ${!inputVal || (state.currentSlide.type === 'poll' && submitted)
-                                                ? 'bg-gray-700 cursor-not-allowed opacity-50'
-                                                : 'bg-gradient-to-r from-accent to-purple-600 hover:shadow-lg hover:shadow-accent/40 active:scale-95'
-                                                }`}
+                                            disabled={!inputVal}
+                                            className={`w-full py-3 rounded-md font-bold text-white transition-all shadow-sm ${inputVal ? 'bg-menti-blue hover:bg-menti-blue-dark active:scale-[0.98]' : 'bg-gray-300 cursor-not-allowed'}`}
                                         >
-                                            {submitted && state.currentSlide.type === 'poll' ? 'Voted' : (
-                                                <>
-                                                    Submit <FaPaperPlane className="text-sm" />
-                                                </>
-                                            )}
+                                            Submit
                                         </button>
-                                    </div>
-                                )}
-
-                                {message && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className={`mt-4 p-3 rounded-lg text-sm text-center ${message.type === 'error' ? 'bg-red-500/20 text-red-200' : 'bg-green-500/20 text-green-200'
-                                            }`}
-                                    >
-                                        {message.text}
-                                    </motion.div>
+                                    </>
                                 )}
                             </div>
-                        </motion.div>
-                    )}
+                        )}
+                    </motion.div>
                 </AnimatePresence>
             </main>
         </div>

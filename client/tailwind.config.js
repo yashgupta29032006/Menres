@@ -7,22 +7,18 @@ export default {
     theme: {
         extend: {
             colors: {
-                'dark-bg': '#0f172a',
-                'card-bg': 'rgba(30, 41, 59, 0.7)',
-                'accent': '#8b5cf6', // Violet
-                'accent-hover': '#7c3aed',
+                'menti-blue': '#005CFF', // The specific brand color
+                'menti-blue-dark': '#0046c2',
+                'menti-bg': '#F4F5F7',   // Light Gray SaaS background
+                'menti-dark-text': '#191919',
+                'menti-light-text': '#505050',
             },
             fontFamily: {
-                sans: ['Inter', 'sans-serif'],
+                sans: ['Inter', 'sans-serif'], // Close to Menti Sans
             },
-            animation: {
-                'float': 'float 6s ease-in-out infinite',
-            },
-            keyframes: {
-                float: {
-                    '0%, 100%': { transform: 'translateY(0)' },
-                    '50%': { transform: 'translateY(-20px)' },
-                }
+            boxShadow: {
+                'menti-card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+                'menti-hover': '0 4px 12px rgba(0, 92, 255, 0.15)',
             }
         },
     },
