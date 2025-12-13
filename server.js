@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client/dist')));
 app.use(express.json());
 
 // State Management
@@ -58,6 +58,11 @@ const getPublicState = () => {
         customBlocklist: profanityFilter.getCustomBlocklist()
     };
 };
+
+// Catch-all for React SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
+});
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
